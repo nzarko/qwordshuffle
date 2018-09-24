@@ -309,7 +309,10 @@ class MainWindow(QMainWindow):
 
         # Format tool bar
         fontBox = QtWidgets.QFontComboBox(self)
-        fontBox.currentFontChanged.connect(lambda font: self.text.setCurrentFont(font))
+        courierFont = QtGui.QFont('Courier New',11,QtGui.QFont.Normal, False)
+        fontBox.currentFontChanged.connect(lambda font: self.textEdit.setCurrentFont(font))
+        fontBox.setCurrentFont(courierFont)
+        self.textEdit.setCurrentFont(courierFont)
 
         fontSize = QtWidgets.QSpinBox(self)
 
@@ -318,7 +321,7 @@ class MainWindow(QMainWindow):
 
         fontSize.valueChanged.connect(lambda size: self.textEdit.setFontPointSize(size))
 
-        fontSize.setValue(11)
+        fontSize.setValue(courierFont.pointSizeF())
 
         fontColor = QtWidgets.QAction(QtGui.QIcon("icons/font-color.png"), "Change font color", self)
         fontColor.triggered.connect(self.fontColorChanged)
@@ -377,6 +380,7 @@ class MainWindow(QMainWindow):
             return
 
         inf = QTextStream(file)
+        inf.setCodec('UTF-8')
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.textEdit.setPlainText(inf.readAll())
         QApplication.restoreOverrideCursor()
@@ -392,6 +396,7 @@ class MainWindow(QMainWindow):
             return False
 
         outf = QTextStream(file)
+        outf.setCodec('UTF-8')
         QApplication.setOverrideCursor(Qt.WaitCursor)
         outf << self.textEdit.toPlainText()
         QApplication.restoreOverrideCursor()
@@ -480,13 +485,21 @@ class MainWindow(QMainWindow):
 
         # Open printing dialog
         dialog = QtPrintSupport.QPrintDialog()
+        dialog.setWindowTitle('Print ' + self.curFile)
+        docToPrint = docToPrint = self.textEdit.document()
 
         if self.textEdit.textCursor().hasSelection():
             dialog.setEnabledOptions(QtPrintSupport.QAbstractPrintDialog.PrintSelection)
+            # dialog.setPrintRange(QtPrintSupport.QPrinter.Selection)
+            selection = self.textEdit.textCursor().selectedText()
+            #selectionDocument = QtGui.QTextDocument()
+            #selectionDocument.setPlainText(selection)
+            #selectionDocument.print(dialog.printer())
+            #if dialog.enabledOptions()
+            docToPrint.setPlainText(selection)
 
-        dialog.setWindowTitle('Print ' + self.curFile)
         if dialog.exec_() == QtWidgets.QDialog.Accepted:
-            self.textEdit.document().print_(dialog.printer())
+            docToPrint.print_(dialog.printer())
 
     def cursorPosition(self):
 
